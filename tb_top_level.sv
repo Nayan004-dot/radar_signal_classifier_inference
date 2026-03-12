@@ -1,98 +1,77 @@
-`timescale 1ns/1ps
+`timescale 1ns / 1ps
 
 module tb_top_level;
 
-    // Clock and reset
     reg clk;
-    reg rst_n;
+    reg rst_btn;
+    reg start_btn;
+    reg [1:0] sw;
+    wire [1:0] led_pred;
+    wire led_done;
 
-    // Input signals
-    reg load_start;
-    reg infer_start;
-
-    // Input data: Unpacked for easy randomizing, then flattened for DUT
-    reg signed [7:0] input_data_unpacked [0:99];
-    wire [799:0]     input_data_flat;
-
-    // Outputs
-    wire [1:0]  argmax_out;
-    wire        inference_done;
-    wire        load_done;
-    wire        busy;
-
-    // Flattening logic for the input port (Icarus requirement)
-    genvar k;
-    generate
-        for (k = 0; k < 100; k = k + 1) begin : flatten_input
-            assign input_data_flat[k*8 +: 8] = input_data_unpacked[k];
-        end
-    endgenerate
-
-    // Instantiate DUT with correct port names
     top_level dut (
         .clk(clk),
-        .rst_n(rst_n),
-        .load_start(load_start),
-        .infer_start(infer_start),
-        .data_in_flat(input_data_flat),
-        .argmax_out(argmax_out),
-        .inference_done(inference_done),
-        .load_done(load_done),
-        .busy(busy)
+        .rst_btn(rst_btn),
+        .start_btn(start_btn),
+        .sw(sw),
+        .led_pred(led_pred),
+        .led_done(led_done)
     );
 
-    // Clock generation (100 MHz)
     always #5 clk = ~clk;
 
-    integer i;
-
     initial begin
-        // Dump waveform for GTKWave
-        $dumpfile("dump.vcd");
-        $dumpvars(0, tb_top_level);
+        $display("Starting Top-Level Physical Simulation...");
+        clk = 0; start_btn = 0; sw = 2'b00;
+        
+        rst_btn = 1; #30; rst_btn = 0; #30; // Reset pulse
+        $display("========================================");
 
-        // Initialize
-        clk = 0;
-        rst_n = 0;
-        load_start = 0;
-        infer_start = 0;
-
-        // Reset pulse
-        #20;
-        rst_n = 1;
-
-        // 1. Start Weight Loading (Crucial for Radar project)
-        #20;
-        $display("Starting Weight Load...");
-        load_start = 1;
-        #10;
-        load_start = 0;
-
-        // Wait for loader to finish
-        wait(load_done);
-        $display("Weights and Biases Loaded.");
-
-        // 2. Prepare Radar Input Data
-        for(i = 0; i < 100; i = i + 1) begin
-            input_data_unpacked[i] = $random % 50;
-        end
-
-        // 3. Start Inference
-        #20;
-        $display("Starting Inference...");
-        infer_start = 1;
-        #10;
-        infer_start = 0;
-
-        // Wait until classifier finishes
-        wait(inference_done);
-
-        $display("-------------------------------------------");
-        $display("Classification Result (Argmax) = %d", argmax_out);
-        $display("-------------------------------------------");
-
+        // TEST DRONE (Switch 00)
+        $display("Testing Switch [00] - Drone...");
+        sw = 2'b00; #20;
+        start_btn = 1; #50; start_btn = 0; 
+        
+        wait(led_done == 1'b1);
+        $display("L3 Scores -> C0:%d, C1:%d, C2:%d, C3:%d", 
+                 $signed(dut.anomaly_detector.l3[0]), $signed(dut.anomaly_detector.l3[1]), 
+                 $signed(dut.anomaly_detector.l3[2]), $signed(dut.anomaly_detector.l3[3]));
+        $display("Prediction LED: %d\n", led_pred);
         #50;
-        $finish;
-    end
 
+        // TEST BIRD (Switch 01)
+        $display("Testing Switch [01] - Bird...");
+        sw = 2'b01; #20;
+        start_btn = 1; #50; start_btn = 0; 
+        
+        wait(led_done == 1'b1);
+        $display("L3 Scores -> C0:%d, C1:%d, C2:%d, C3:%d", 
+                 $signed(dut.anomaly_detector.l3[0]), $signed(dut.anomaly_detector.l3[1]), 
+                 $signed(dut.anomaly_detector.l3[2]), $signed(dut.anomaly_detector.l3[3]));
+        $display("Prediction LED: %d", led_pred);
+        $display("========================================");
+        
+        #20;
+        // ---------------------------------------------------------
+        // TEST 3: Simulate testing Class 2 (Car)
+        // ---------------------------------------------------------
+        $display("Testing Switch [10] - Car...");
+        sw = 2'b10; // Flip the physical switch to 2
+        #20;
+        
+        // "Press" the start button
+        start_btn = 1; #50; start_btn = 0; 
+        
+        // Wait for inference to finish
+        wait(led_done == 1'b1);
+        
+        $display("L3 Scores -> C0:%d, C1:%d, C2:%d, C3:%d", 
+                 $signed(dut.anomaly_detector.l3[0]), $signed(dut.anomaly_detector.l3[1]), 
+                 $signed(dut.anomaly_detector.l3[2]), $signed(dut.anomaly_detector.l3[3]));
+                 
+        $display("Prediction LED: %d", led_pred);
+        $display("========================================");
+        #50;
+         $finish;
+    end
 endmodule
