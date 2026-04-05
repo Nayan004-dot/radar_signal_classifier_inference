@@ -2,13 +2,13 @@
 
 This repository contains a high-performance **Verilog implementation** of a Multi-Layer Perceptron (MLP) optimized for real-time radar signal classification on FPGAs. The design utilizes a custom **Controller-Datapath** architecture to perform quantized inference with minimal hardware resource overhead.
 
-## 🚀 Key Features
+## Key Features
 * **FSM-Based Controller:** Implements a robust 5-state synchronous Finite State Machine (`nn_fsm.v`) to manage sequential layer processing and resource reuse.
 * **Q7 Fixed-Point Math:** Utilizes signed 8-bit weights and 32-bit accumulators with **7-bit arithmetic shifting** to simulate floating-point precision with integer-only logic.
 * **Zero-Overhead ReLU:** Hardware-efficient activation function implemented via 32-bit comparison logic, optimized for high-frequency FPGA synthesis.
 * **Hardware-in-the-Loop (HIL) Ready:** A `top_level` wrapper interfaces the AI core with physical FPGA buttons, switches, and LEDs for real-time, on-chip verification.
 
-## 🏗️ Hardware Architecture
+## Hardware Architecture
 
 ### 1. AI Core (`nn_fsm.v`)
 The core inference engine processes a flattened input vector (100 features) through three fully-connected layers:
@@ -21,7 +21,7 @@ The core inference engine processes a flattened input vector (100 features) thro
 * **Edge Detection:** Synchronizes physical button presses (`start_btn`) to a single-cycle pulse, preventing multiple triggers.
 * **On-Chip ROM:** Uses Block RAM (`rom_style = "block"`) to store test vectors, allowing for portable, PC-free testing via hardware switches.
 
-## 📂 Repository Structure
+## Repository Structure
 ```text
 ├── rtl/
 │   ├── top_level.v         # FPGA Top-level Wrapper (I/O & ROM Interface)
@@ -34,3 +34,5 @@ The core inference engine processes a flattened input vector (100 features) thro
 └── docs/
     ├── inference_waveform.png
     └── console_output.png
+
+
