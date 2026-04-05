@@ -38,12 +38,12 @@ The design is validated using a hierarchical testbench (tb_top_level.sv) in a Li
 ### **Simulation Results (Xilinx Vivado)**
 The following waveform demonstrates the successful execution of the inference cycle. The led_done flag pulses high only after the final classification is latched.
 
-![Inference Waveform](docs/inference_waveform.png)
+![Inference Waveform](main/inference_waveform.png)
 
 ### **Classification Output Log**
 The log below confirms the signed 32-bit scores for each class. The high score separation indicates strong model confidence and correct fixed-point scaling.
 
-![Console Output](docs/console_output.png)
+![Console Output](main/console_output.png)
 
 ## Tech Stack
 * **HDL:** Verilog / SystemVerilog
